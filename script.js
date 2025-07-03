@@ -18,6 +18,7 @@ const vehicleModels = [
     { id: 'jac-la-venezolana-diesel-4x4', name: "La Venezolana - Diesel 4X4", basePrice: 0 },
     { id: 'jac-la-venezolana-pro-4x4', name: "La Venezolana Pro 4x4", basePrice: 0 },
     { id: 'jac-aventura-gasolina', name: "Aventura - Gasolina", basePrice: 0 },
+    { id: 'jac-aventura-diesel', name: "Aventura - Diesel", basePrice: 0},
     { id: 'jac-arena-manual', name: "Arena Manual", basePrice: 0 },
     { id: 'jac-arena-automatico', name: "Arena Automático", basePrice: 0 },
     { id: 'jac-arena-pro', name: "Arena PRO", basePrice: 0 },
