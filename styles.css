@@ -1,152 +1,153 @@
-/* Estilos personalizados para el gradiente del encabezado */
+/* --- Variables CSS para colores --- */
+:root {
+  --jac-blue: #4d749d;
+  --jac-dark-blue: #4d545f;
+  --white: #ffffff;
+  --black: #000000;
+  --gray-light: #7b7b7b;
+  --gray-medium: #8d8d8d;
+  --gray-dark: #515151;
+  --blue-accent: #2563eb; /* Azul para totales en impresión */
+  --red-accent: #ef4444; /* Rojo para descuentos en impresión */
+}
+
+/* --- Estilos Generales y Componentes --- */
+
+/* Gradiente de fondo para encabezados o secciones destacadas */
 .gradient-bg {
-    /* Mantiene tu gradiente personalizado, es una buena combinación de colores */
-    background: linear-gradient(155deg, #4d749d 0%, #ffff 100%);
+  background: linear-gradient(155deg, var(--jac-blue) 0%, var(--white) 100%);
 }
 
-/* Estilos para el contenedor del logo en el encabezado */
+/* Contenedor y tamaño del logo */
 .logo-container img {
-    height: 48px; /* Altura por defecto para el logo en móviles */
-    width: auto;
+  height: 48px; /* Altura por defecto para móviles */
+  width: auto;
 }
 
-/* Media query para ajustar el tamaño del logo en pantallas más grandes (tablets y desktops) */
+/* Ajuste del tamaño del logo para pantallas más grandes (tablets y desktops) */
 @media (min-width: 768px) {
-    .logo-container img {
-        height: 64px; /* Altura del logo en pantallas más grandes */
-    }
+  .logo-container img {
+    height: 64px; /* Altura del logo en pantallas grandes */
+  }
 }
 
-/* Aunque no se usa en el HTML actual, es una buena regla para futuros componentes */
+/* Efecto hover para tarjetas de vehículos (si se implementan) */
 .vehicle-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* * Estilos para el área de impresión. 
- * ¡Esta sección es crucial para que la impresión funcione correctamente!
- */
-@media print {
-    /* Oculta todos los elementos de la página por defecto */
-    body * {
-        visibility: hidden;
-    }
+/* --- Estilos de Botones Futuristas --- */
 
-    /* * Muestra solo el 'print-area' y todos sus elementos hijos.
-     * El 'print-area' es el contenedor de la cotización a imprimir.
-     */
-    .print-area, .print-area * {
-        visibility: visible;
-        /* Asegura que el contenido sea visible y no sea transparente */
-        color: #000 !important; 
-        background-color: #fff !important; 
-    }
-    
-    /* * Asegura que el 'print-area' ocupe todo el espacio visible en la página
-     * para la impresión.
-     */
-    .print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        min-height: 100vh;
-        /* Asegura que la sección de impresión se muestre como un bloque */
-        display: block !important;
-        /* Elimina márgenes y rellenos innecesarios para la impresión */
-        margin: 0;
-        padding: 2rem;
-        box-sizing: border-box;
-    }
-
-    /* Oculta los elementos con la clase 'no-print' (como los botones) */
-    .no-print,
-    .no-print * {
-        display: none !important;
-    }
-    
-    /* Forzar los colores para la impresión. 
-       Esto es importante para que los colores se impriman correctamente,
-       especialmente en los navegadores basados en WebKit (Chrome, Edge, Safari). */
-    .gradient-bg, .text-blue-600, .text-red-500, .text-gray-800 {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    /* Ajustes específicos para los colores de texto en la impresión */
-    #print-total, #total {
-        color: #2563eb !important; /* Azul para el total */
-    }
-    #print-discount, #discount-amount {
-        color: #ef4444 !important; /* Rojo para el descuento */
-    }
-}
-
-/* --- ESTILOS DE BOTONES FUTURISTAS --- */
-
-/* Animación para el efecto de pulso del borde */
+/* Animación de pulso para el efecto neón en botones */
 @keyframes pulse-neon {
-    0% {
-        box-shadow: 0 0 5px #7b7b7b, 0 0 10px #8d8d8d, 0 0 15px #ffffff;
-    }
-    50% {
-        box-shadow: 0 0 10px #7b7b7b, 0 0 20px #8d8d8d, 0 0 30px #ffffff;
-    }
-    100% {
-        box-shadow: 0 0 5px #7b7b7b, 0 0 10px #8d8d8d, 0 0 15px #ffffff;
-    }
+  0% {
+    box-shadow: 0 0 5px var(--gray-light), 0 0 10px var(--gray-medium), 0 0 15px var(--white);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--gray-light), 0 0 20px var(--gray-medium), 0 0 30px var(--white);
+  }
+  100% {
+    box-shadow: 0 0 5px var(--gray-light), 0 0 10px var(--gray-medium), 0 0 15px var(--white);
+  }
 }
 
-/* Estilo para el botón principal futurista */
+/* Estilo para el botón principal con efecto futurista */
 .futuristic-button {
-    /* Colores y gradiente base */
-    background: linear-gradient(45deg, #4d749d, #4d545f);
-    color: #fff;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-    
-    /* Efecto de neón inicial */
-    box-shadow: 0 0 5px #7e7e7e, 0 0 10px #ffffff;
-    
-    /* Animación de pulso */
-    animation: pulse-neon 2s infinite alternate;
+  background: linear-gradient(45deg, var(--jac-blue), var(--jac-dark-blue));
+  color: var(--white);
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 5px var(--gray-light), 0 0 10px var(--white); /* Efecto neón inicial */
+  animation: pulse-neon 2s infinite alternate; /* Animación de pulso */
 }
 
-/* Efecto hover (al pasar el ratón) */
+/* Efecto hover para el botón principal */
 .futuristic-button:hover {
-    /* Cambia el gradiente y el brillo */
-    background: linear-gradient(45deg, #4d545f, #4d749d);
-    transform: translateY(-3px);
-    box-shadow: 0 0 15px #bcbcbc, 0 0 30px #aaaaaa, 0 0 45px #ffffff;
+  background: linear-gradient(45deg, var(--jac-dark-blue), var(--jac-blue));
+  transform: translateY(-3px);
+  box-shadow: 0 0 15px #bcbcbc, 0 0 30px #aaaaaa, 0 0 45px var(--white);
 }
 
-/* Estilo para un botón secundario (menos prominente) */
+/* Estilo para un botón secundario futurista */
 .futuristic-button-secondary {
-    background: transparent;
-    color: #939393;
-    font-weight: bold;
-    border: 2px solid #515151;
-    border-radius: 8px;
-    padding: 12px 24px;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-    
-    /* Brillo sutil */
-    box-shadow: 0 0 5px rgba(128, 128, 128, 0.5);
+  background: transparent;
+  color: #939393;
+  font-weight: bold;
+  border: 2px solid var(--gray-dark);
+  border-radius: 8px;
+  padding: 12px 24px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 5px rgba(128, 128, 128, 0.5); /* Brillo sutil */
 }
 
 /* Efecto hover para el botón secundario */
 .futuristic-button-secondary:hover {
-    background: #ababab;
-    color: #1a1a2e; /* Cambia a un color oscuro para el texto */
-    transform: translateY(-3px);
-    box-shadow: 0 0 10px #959595, 0 0 20px #ffffff;
+  background: #ababab;
+  color: #1a1a2e; /* Cambia a color oscuro al hacer hover */
+  transform: translateY(-3px);
+  box-shadow: 0 0 10px #959595, 0 0 20px var(--white);
+}
+
+/* --- Estilos para Impresión (Media Query) --- */
+@media print {
+  /* Oculta todos los elementos por defecto en la impresión */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Muestra solo el área de impresión y sus hijos */
+  .print-area,
+  .print-area * {
+    visibility: visible;
+    color: var(--black) !important;
+    background-color: var(--white) !important;
+  }
+
+  /* Posicionamiento y tamaño del área de impresión */
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    min-height: 100vh;
+    display: block !important;
+    margin: 0;
+    padding: 2rem;
+    box-sizing: border-box;
+  }
+
+  /* Oculta elementos que no deben imprimirse (ej. botones) */
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  /* Fuerza la impresión de colores exactos (crucial para WebKit) */
+  .gradient-bg,
+  .text-blue-600,
+  .text-red-500,
+  .text-gray-800 {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ajustes de color específicos para texto en la impresión */
+  #print-total,
+  #total {
+    color: var(--blue-accent) !important; /* Azul para el total */
+  }
+  #print-discount,
+  #discount-amount {
+    color: var(--red-accent) !important; /* Rojo para el descuento */
+  }
 }

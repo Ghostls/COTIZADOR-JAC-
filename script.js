@@ -1,6 +1,7 @@
-// --- 1. DATOS Y CONFIGURACIÓN ---
+// --- 1. CONFIGURACIÓN INICIAL Y DATOS ---
+
 // Modelos de vehículos disponibles con precios base
-// Se recomienda llenar los precios base para que la funcionalidad sea más útil.
+// ¡IMPORTANTE! Se recomienda llenar los precios base para que la funcionalidad sea más útil.
 const vehicleModels = [
     { id: 'jac-x100', name: "X100", basePrice: 0 },
     { id: 'jac-urban-chasis-3ton', name: "Urban Chasis 3 TON", basePrice: 0 },
@@ -18,7 +19,7 @@ const vehicleModels = [
     { id: 'jac-la-venezolana-diesel-4x4', name: "La Venezolana - Diesel 4X4", basePrice: 0 },
     { id: 'jac-la-venezolana-pro-4x4', name: "La Venezolana Pro 4x4", basePrice: 0 },
     { id: 'jac-aventura-gasolina', name: "Aventura - Gasolina", basePrice: 0 },
-    { id: 'jac-aventura-diesel', name: "Aventura - Diesel", basePrice: 0},
+    { id: 'jac-aventura-diesel', name: "Aventura - Diesel", basePrice: 0 },
     { id: 'jac-arena-manual', name: "Arena Manual", basePrice: 0 },
     { id: 'jac-arena-automatico', name: "Arena Automático", basePrice: 0 },
     { id: 'jac-arena-pro', name: "Arena PRO", basePrice: 0 },
@@ -65,7 +66,45 @@ const vehicleModels = [
 // Contador para generar IDs únicos para cada vehículo agregado
 let vehicleCounter = 0;
 
-// --- 2. FUNCIONES PRINCIPALES ---
+// Referencias a elementos del DOM para evitar múltiples selecciones
+const dom = {
+    vehiclesContainer: document.getElementById('vehicles-container'),
+    quoteSummary: document.getElementById('quote-summary'),
+    subtotalDisplay: document.getElementById('subtotal'),
+    totalDisplay: document.getElementById('total'),
+    discountRow: document.getElementById('discount-row'), // Asumiendo que existe
+    printArea: document.querySelector('.print-area'),
+    clientNameInput: document.getElementById('client-name'),
+    clientIdInput: document.getElementById('client-id'),
+    clientPhoneInput: document.getElementById('client-phone'),
+    clientEmailInput: document.getElementById('client-email'),
+    notesInput: document.getElementById('notes'),
+    dealershipAddressInput: document.getElementById('dealership-address'),
+    salespersonInput: document.getElementById('salesperson')
+};
+
+// --- 2. FUNCIONES DE UTILIDAD ---
+
+/**
+ * Formatea un número como moneda USD.
+ * @param {number} amount - El valor numérico a formatear.
+ * @returns {string} El valor formateado como string de moneda.
+ */
+const formatCurrency = (amount) => {
+    return amount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// --- 3. FUNCIONES PRINCIPALES DE GESTIÓN DE VEHÍCULOS ---
+
+/**
+ * Genera el HTML para las opciones de modelos de vehículos.
+ * @returns {string} HTML de las opciones de select.
+ */
+const generateModelOptions = () => {
+    return vehicleModels.map(model =>
+        `<option value="${model.basePrice}">${model.name}</option>`
+    ).join('');
+};
 
 /**
  * Agrega un nuevo formulario de vehículo al contenedor.
@@ -73,14 +112,12 @@ let vehicleCounter = 0;
  */
 function addVehicle() {
     vehicleCounter++;
-    const container = document.getElementById('vehicles-container');
+    const vehicleId = `vehicle-${vehicleCounter}`;
 
-    // Crea el elemento HTML para el nuevo vehículo
     const vehicleDiv = document.createElement('div');
     vehicleDiv.className = 'vehicle-item p-4 border border-gray-200 rounded-lg bg-gray-50 mb-4';
-    vehicleDiv.dataset.id = `vehicle-${vehicleCounter}`; // ID único y claro
+    vehicleDiv.dataset.id = vehicleId; // ID único y claro
 
-    // HTML del formulario de vehículo
     vehicleDiv.innerHTML = `
         <div class="flex justify-between items-center mb-4">
             <h4 class="font-bold text-gray-800">Vehículo #${vehicleCounter}</h4>
@@ -92,9 +129,7 @@ function addVehicle() {
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Modelo:</label>
                 <select onchange="updatePrice(this)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 model-input">
-                    ${vehicleModels.map(model =>
-                        `<option value="${model.basePrice}">${model.name}</option>`
-                    ).join('')}
+                    ${generateModelOptions()}
                 </select>
             </div>
             <div>
@@ -124,12 +159,12 @@ function addVehicle() {
         </div>
     `;
 
-    container.appendChild(vehicleDiv);
+    dom.vehiclesContainer.appendChild(vehicleDiv);
 
     // Agrega event listeners para calcular automáticamente cuando los valores cambian
     const inputsToListen = vehicleDiv.querySelectorAll('.quantity-input, .price-input, .model-input, .brand-input, .color-input, .year-input, .motor-input');
     inputsToListen.forEach(input => input.addEventListener('input', calculateQuote));
-    
+
     // Calcula la cotización inmediatamente después de agregar un vehículo
     calculateQuote();
 }
@@ -141,10 +176,8 @@ function addVehicle() {
 function updatePrice(selectElement) {
     const vehicleDiv = selectElement.closest('.vehicle-item');
     const priceInput = vehicleDiv.querySelector('.price-input');
-    
     // El valor de la opción es el precio base que guardamos en el HTML
     priceInput.value = selectElement.value;
-    
     // Recalcula la cotización
     calculateQuote();
 }
@@ -165,11 +198,10 @@ function removeVehicle(button) {
 function calculateQuote() {
     const vehicles = document.querySelectorAll('.vehicle-item');
     let subtotal = 0;
-    const summaryContainer = document.getElementById('quote-summary');
-    summaryContainer.innerHTML = ''; // Limpia el contenido anterior
+    dom.quoteSummary.innerHTML = ''; // Limpia el contenido anterior
 
     if (vehicles.length === 0) {
-        summaryContainer.innerHTML = '<p class="text-gray-500 italic text-center">Agregue vehículos y calcule la cotización para ver el resumen.</p>';
+        dom.quoteSummary.innerHTML = '<p class="text-gray-500 italic text-center">Agregue vehículos y calcule la cotización para ver el resumen.</p>';
     } else {
         vehicles.forEach(vehicle => {
             const modelSelect = vehicle.querySelector('.model-input');
@@ -180,70 +212,98 @@ function calculateQuote() {
             const color = vehicle.querySelector('.color-input').value;
             const year = vehicle.querySelector('.year-input').value;
             const motor = vehicle.querySelector('.motor-input').value;
-       
             const vehicleTotal = quantity * price;
             subtotal += vehicleTotal;
-            
+
             // Crea el HTML para el resumen de cada vehículo
             const summaryItem = document.createElement('div');
             summaryItem.className = 'border-b pb-2 mb-2 last:border-b-0 last:pb-0';
             summaryItem.innerHTML = `
                 <p class="font-semibold text-gray-800">${model}</p>
                 <p class="text-gray-600 flex justify-between">
-                    <span>${quantity} unidad(es) x $${price.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    <span class="font-semibold text-gray-800">$${vehicleTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span>${quantity} unidad(es) x $${formatCurrency(price)}</span>
+                    <span class="font-semibold text-gray-800">$${formatCurrency(vehicleTotal)}</span>
                 </p>
                 ${brand ? `<p class="text-sm text-gray-500 mt-1">Marca: ${brand}</p>` : ''}
                 ${color ? `<p class="text-sm text-gray-500 mt-1">Color: ${color}</p>` : ''}
                 ${year ? `<p class="text-sm text-gray-500 mt-1">Año: ${year}</p>` : ''}
                 ${motor ? `<p class="text-sm text-gray-500 mt-1">Motor: ${motor}</p>` : ''}
             `;
-            summaryContainer.appendChild(summaryItem);
+            dom.quoteSummary.appendChild(summaryItem);
         });
     }
 
     const total = subtotal;
-    
     // Muestra los resultados en el resumen
-    document.getElementById('subtotal').textContent = `$${subtotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    const discountRow = document.getElementById('discount-row'); 
-    if (discountRow) {
-        discountRow.style.display = 'none'; 
+    dom.subtotalDisplay.textContent = `$${formatCurrency(subtotal)}`;
+
+    // Oculta la fila de descuento si no se usa
+    if (dom.discountRow) {
+        dom.discountRow.style.display = 'none';
     }
-    document.getElementById('total').textContent = `$${total.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    dom.totalDisplay.textContent = `$${formatCurrency(total)}`;
 }
+
+// --- 4. FUNCIONES DE IMPRESIÓN ---
 
 /**
  * Prepara el área de impresión y activa el diálogo de impresión del navegador.
  */
 function printQuote() {
     // 1. Obtener datos del formulario
-    const clientName = document.getElementById('client-name').value;
-    const clientId = document.getElementById('client-id').value;
-    const clientPhone = document.getElementById('client-phone').value;
-    const clientEmail = document.getElementById('client-email').value;
-    const notes = document.getElementById('notes').value;
-    const dealershipAddress = document.getElementById('dealership-address').value;
-    const salesperson = document.getElementById('salesperson').value; 
-    
-    // Obtener los valores numéricos sin el símbolo "$" para formatear correctamente
-    const subtotalValue = parseFloat(document.getElementById('subtotal').textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
-    const totalValue = parseFloat(document.getElementById('total').textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
+    const clientName = dom.clientNameInput.value;
+    const clientId = dom.clientIdInput.value;
+    const clientPhone = dom.clientPhoneInput.value;
+    const clientEmail = dom.clientEmailInput.value;
+    const notes = dom.notesInput.value;
+    const dealershipAddress = dom.dealershipAddressInput.value;
+    const salesperson = dom.salespersonInput.value;
+
+    // Obtener los valores numéricos del resumen (ya formateados en calculateQuote)
+    const subtotalValue = parseFloat(dom.subtotalDisplay.textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
+    const totalValue = parseFloat(dom.totalDisplay.textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
 
     // Formatear los valores para la impresión
-    const subtotalPrintable = subtotalValue.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const totalPrintable = totalValue.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    
+    const subtotalPrintable = formatCurrency(subtotalValue);
+    const totalPrintable = formatCurrency(totalValue);
+
+    // Recopilar los detalles de cada vehículo para la impresión
+    let vehiclesHtmlForPrint = '';
+    document.querySelectorAll('.vehicle-item').forEach(vehicle => {
+        const modelSelect = vehicle.querySelector('.model-input');
+        const model = modelSelect.options[modelSelect.selectedIndex].text;
+        const quantity = parseInt(vehicle.querySelector('.quantity-input').value) || 0;
+        const price = parseFloat(vehicle.querySelector('.price-input').value) || 0;
+        const brand = vehicle.querySelector('.brand-input').value;
+        const color = vehicle.querySelector('.color-input').value;
+        const year = vehicle.querySelector('.year-input').value;
+        const motor = vehicle.querySelector('.motor-input').value;
+        const vehicleTotal = quantity * price;
+
+        vehiclesHtmlForPrint += `
+            <div class="vehicle-item-print">
+                <div class="flex">
+                    <p class="font-bold">${model}</p>
+                    <p>Subtotal: $${formatCurrency(vehicleTotal)}</p>
+                </div>
+                <p>${quantity} unidad(es) x $${formatCurrency(price)}</p>
+                ${brand ? `<p class="text-sm">Marca: ${brand}</p>` : ''}
+                ${color ? `<p class="text-sm">Color: ${color}</p>` : ''}
+                ${year ? `<p class="text-sm">Año: ${year}</p>` : ''}
+                ${motor ? `<p class="text-sm">Motor: ${motor}</p>` : ''}
+            </div>
+        `;
+    });
+
+    const currentDate = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
+
     // 2. Llenar el área de impresión con el nuevo diseño
-    const printArea = document.querySelector('.print-area');
-    
-    // Nuevo HTML para el área de impresión con un diseño más elaborado
-    printArea.innerHTML = `
+    dom.printArea.innerHTML = `
         <style>
             /* Estilos específicos para impresión */
             @page {
                 size: A4;
-                margin: 0.5cm; /* Elimina todos los márgenes */
+                margin: 0.5cm;
                 /* Intenta suprimir encabezados y pies de página en la impresión */
                 @top-left { content: ""; }
                 @top-center { content: ""; }
@@ -261,9 +321,9 @@ function printQuote() {
                 width: 100%;
                 max-width: 21cm; /* Ancho de A4 menos márgenes */
                 margin: 0 auto;
-                padding: 0.5cm; /* Ajustado para más espacio vertical */
+                padding: 0.5cm;
                 box-sizing: border-box;
-                position: relative; 
+                position: relative;
             }
             .watermark {
                 position: absolute;
@@ -271,62 +331,62 @@ function printQuote() {
                 left: 50%;
                 transform: translate(-50%, -50%);
                 opacity: 0.10; /* Transparencia muy ligera */
-                z-index: -1; 
-                pointer-events: none; 
+                z-index: -1;
+                pointer-events: none;
                 width: 70%; /* Ajusta el tamaño de la marca de agua */
                 height: auto;
             }
             .header-print {
                 display: flex;
-                justify-content: space-between; 
+                justify-content: space-between;
                 align-items: center;
-                margin-bottom: 15px; /* Espaciado reducido */
-                padding-bottom: 8px; /* Espaciado reducido */
-                border-bottom: 1px solid #ddd; /* Borde más sutil */
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #ddd;
             }
             .header-print h1 {
-                font-size: 1.4em; /* Tamaño de fuente ajustado */
+                font-size: 1.4em;
                 color: #000;
                 margin: 0;
             }
             .header-print p {
-                font-size: 0.85em; /* Tamaño de fuente ajustado */
+                font-size: 0.85em;
                 color: #555;
-                margin: 1px 0; /* Espaciado reducido */
+                margin: 1px 0;
             }
             .header-print img {
-                height: 50px; /* Tamaño del logo ajustado */
+                height: 50px;
                 width: auto;
             }
             .section-print {
-                margin-bottom: 15px; /* Espaciado reducido */
-                padding: 10px; /* Espaciado reducido */
+                margin-bottom: 15px;
+                padding: 10px;
                 border: 1px solid #eee;
                 border-radius: 5px;
-                background-color: #f9f9f9; /* Color de fondo original */
+                background-color: #f9f9f9;
             }
             .section-print h2 {
-                font-size: 1.3em; /* Tamaño de fuente ajustado */
+                font-size: 1.3em;
                 color: #333;
-                margin-bottom: 8px; /* Espaciado reducido */
-                padding-bottom: 4px; /* Espaciado reducido */
+                margin-bottom: 8px;
+                padding-bottom: 4px;
                 border-bottom: 1px solid #eee;
             }
             .section-print .grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Ajustado para compactar */
-                gap: 8px; /* Espaciado reducido */
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 8px;
             }
             .section-print p {
-                font-size: 0.85em; /* Tamaño de fuente ajustado */
-                line-height: 1.3; /* Interlineado ajustado */
+                font-size: 0.85em;
+                line-height: 1.3;
             }
             .vehicle-item-print {
                 border: 1px solid #ddd;
-                padding: 8px; /* Espaciado reducido */
+                padding: 8px;
                 border-radius: 5px;
                 background-color: #fff;
-                margin-bottom: 8px; /* Espaciado reducido */
+                margin-bottom: 8px;
             }
             .vehicle-item-print .flex {
                 display: flex;
@@ -336,44 +396,44 @@ function printQuote() {
             }
             .vehicle-item-print p {
                 margin: 0;
-                font-size: 0.85em; /* Tamaño de fuente ajustado */
+                font-size: 0.85em;
             }
             .vehicle-item-print .font-bold {
-                font-size: 0.9em; /* Ajuste para el texto del modelo */
+                font-size: 0.9em;
             }
             .summary-print {
-                margin-top: 20px; /* Espaciado reducido */
-                padding: 12px; /* Espaciado reducido */
+                margin-top: 20px;
+                padding: 12px;
                 border: 1px solid #ddd;
                 border-radius: 5px;
-                background-color: #fff; /* Color de fondo original */
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Sombra más sutil */
+                background-color: #fff;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             }
             .summary-print .flex {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 4px 0; /* Espaciado reducido */
+                padding: 4px 0;
             }
             .summary-print span {
-                font-size: 0.9em; /* Tamaño de fuente ajustado */
+                font-size: 0.9em;
             }
             .summary-print .total-row {
-                font-size: 1.6em; /* Tamaño de fuente ajustado */
+                font-size: 1.6em;
                 font-weight: bold;
-                border-top: 1px solid #eee; /* Borde más sutil */
-                margin-top: 8px; /* Espaciado reducido */
-                padding-top: 8px; /* Espaciado reducido */
-                color: #0056b3; 
+                border-top: 1px solid #eee;
+                margin-top: 8px;
+                padding-top: 8px;
+                color: #0056b3;
             }
             .footer-print {
-                margin-top: 20px; /* Espaciado reducido */
+                margin-top: 20px;
                 text-align: center;
-                font-size: 0.75em; /* Tamaño de fuente ajustado */
+                font-size: 0.75em;
                 color: #777;
             }
             .footer-print p {
-                margin: 2px 0; /* Espaciado reducido */
+                margin: 2px 0;
             }
         </style>
         <div class="print-container">
@@ -383,7 +443,7 @@ function printQuote() {
                 <div class="text-left">
                     <h1 class="text-4xl font-bold text-gray-900">PROFORMA</h1>
                     <p class="text-gray-600 text-lg">Concesionario JAC</p>
-                    <p class="text-gray-500 text-sm mt-1">Fecha de cotización: <span id="print-date" class="font-semibold"></span></p>
+                    <p class="text-gray-500 text-sm mt-1">Fecha de cotización: <span id="print-date" class="font-semibold">${currentDate}</span></p>
                 </div>
                 <img src="JACNEGRO.png" alt="Logo de la Empresa">
             </div>
@@ -391,16 +451,18 @@ function printQuote() {
             <div class="section-print">
                 <h2>Datos del Cliente</h2>
                 <div class="grid">
-                    <p><strong>Nombre:</strong> <span id="print-client-name"></span></p>
-                    <p><strong>Cédula/RIF:</strong> <span id="print-client-id"></span></p>
-                    <p><strong>Teléfono:</strong> <span id="print-client-phone"></span></p>
-                    <p><strong>Correo:</strong> <span id="print-client-email"></span></p>
+                    <p><strong>Nombre:</strong> <span id="print-client-name">${clientName}</span></p>
+                    <p><strong>Cédula/RIF:</strong> <span id="print-client-id">${clientId}</span></p>
+                    <p><strong>Teléfono:</strong> <span id="print-client-phone">${clientPhone}</span></p>
+                    <p><strong>Correo:</strong> <span id="print-client-email">${clientEmail}</span></p>
                 </div>
             </div>
 
             <div class="section-print">
                 <h2>Vehículos Cotizados</h2>
-                <div id="print-vehicles"></div>
+                <div id="print-vehicles">
+                    ${vehiclesHtmlForPrint || '<p class="text-gray-500 italic">No hay vehículos cotizados.</p>'}
+                </div>
             </div>
 
             <div class="summary-print">
@@ -417,110 +479,20 @@ function printQuote() {
 
             <div class="section-print">
                 <h3>Notas Adicionales:</h3>
-                <p id="print-notes" class="italic"></p>
+                <p id="print-notes" class="italic">${notes || 'N/A'}</p>
             </div>
 
             <div class="footer-print">
-                <p><strong>Dirección del Concesionario:</strong> <span id="print-dealership-address"></span></p>
-                <p><strong>Vendedor:</strong> <span id="print-salesperson"></span></p>
-                <p>Esta cotización es válida por 24 horas y está sujeta a la disponibilidad de inventario.</p>
-                <p>¡Gracias por preferirnos!</p>
+                <p><strong>Dirección del Concesionario:</strong> <span id="print-dealership-address">${dealershipAddress || 'No especificada'}</span></p>
+                <p><strong>Vendedor:</strong> <span id="print-salesperson">${salesperson || 'No especificado'}</span></p>
+                <p>Esta proforma es valida por 24 horas y esta sujeta a la disponibilidad del inventario</p>
             </div>
         </div>
     `;
 
-    // 3. Rellenar los datos en el nuevo HTML del área de impresión
-    document.getElementById('print-client-name').textContent = clientName || 'No especificado';
-    document.getElementById('print-client-id').textContent = clientId || 'No especificado';
-    document.getElementById('print-client-phone').textContent = clientPhone || 'No especificado';
-    document.getElementById('print-client-email').textContent = clientEmail || 'No especificado';
-    document.getElementById('print-notes').textContent = notes || 'No hay notas adicionales.';
-    // Los subtotales y totales ya se rellenan directamente en el innerHTML con toLocaleString
-    document.getElementById('print-date').textContent = new Date().toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    const printDealershipAddress = document.getElementById('print-dealership-address');
-    if (dealershipAddress.trim() !== '') {
-        printDealershipAddress.textContent = dealershipAddress;
-    } else {
-        printDealershipAddress.textContent = 'JAC Express, CIUDAD JAC';
-    }
-
-    // Rellenar el nuevo campo del vendedor
-    document.getElementById('print-salesperson').textContent = salesperson || 'No especificado';
-
-    const printVehiclesContainer = document.getElementById('print-vehicles');
-    printVehiclesContainer.innerHTML = '';
-    const vehicleItems = document.querySelectorAll('.vehicle-item');
-    
-    if (vehicleItems.length === 0) {
-        printVehiclesContainer.innerHTML = '<p class="text-gray-500 italic">No se cotizaron vehículos.</p>';
-    } else {
-        vehicleItems.forEach((item) => {
-            const model = item.querySelector('.model-input').options[item.querySelector('.model-input').selectedIndex].text;
-            const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
-            const price = parseFloat(item.querySelector('.price-input').value) || 0;
-            const brand = item.querySelector('.brand-input').value;
-            const color = item.querySelector('.color-input').value;
-            const year = item.querySelector('.year-input').value;
-            const motor = item.querySelector('.motor-input').value;
-            
-            const vehicleTotal = quantity * price;
-
-            // Formatear el precio unitario y el total del vehículo
-            const formattedPrice = price.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const formattedVehicleTotal = vehicleTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            
-            const printItem = document.createElement('div');
-            printItem.className = 'vehicle-item-print'; 
-            printItem.innerHTML = `
-                <div class="flex">
-                    <p class="font-bold text-gray-900">${model} <span class="font-normal text-gray-600">(${quantity} unidad${quantity > 1 ? 'es' : ''})</span></p>
-                    <p class="font-bold text-blue-600">$${formattedVehicleTotal}</p>
-                </div>
-                <div class="grid">
-                    <p><strong>Precio Unitario:</strong> $${formattedPrice}</p>
-                    ${brand ? `<p><strong>Marca:</strong> ${brand}</p>` : ''}
-                    ${color ? `<p><strong>Color:</strong> ${color}</p>` : ''}
-                    ${year ? `<p><strong>Año:</strong> ${year}</p>` : ''}
-                    ${motor ? `<p><strong>Motor:</strong> ${motor}</p>` : ''}
-                </div>
-            `;
-            printVehiclesContainer.appendChild(printItem);
-        });
-    }
-
-    // 4. Activar el diálogo de impresión
+    // 3. Activar el diálogo de impresión
     window.print();
 }
 
-/**
- * Limpia todos los campos del formulario y reinicia la cotización.
- */
-function clearForm() {
-    // Limpia los campos de cliente y descuento
-    document.getElementById('client-name').value = '';
-    document.getElementById('client-id').value = '';
-    document.getElementById('client-phone').value = '';
-    document.getElementById('client-email').value = '';
-    document.getElementById('notes').value = '';
-    document.getElementById('dealership-address').value = ''; 
-    document.getElementById('salesperson').value = ''; 
-    
-    // Limpia el contenedor de vehículos
-    const vehiclesContainer = document.getElementById('vehicles-container');
-    vehiclesContainer.innerHTML = '';
-    
-    // Reinicia el contador de vehículos y agrega un vehículo por defecto
-    vehicleCounter = 0;
-    addVehicle(); 
-}
-
-// --- 3. INICIALIZACIÓN ---
-
-document.addEventListener('DOMContentLoaded', () => {
-    addVehicle(); 
-});
+// Opcional: Llamar a calculateQuote al cargar la página si ya hay vehículos por defecto
+document.addEventListener('DOMContentLoaded', calculateQuote);
