@@ -190,8 +190,8 @@ function calculateQuote() {
             summaryItem.innerHTML = `
                 <p class="font-semibold text-gray-800">${model}</p>
                 <p class="text-gray-600 flex justify-between">
-                    <span>${quantity} unidad(es) x $${price.toFixed(2)}</span>
-                    <span class="font-semibold text-gray-800">$${vehicleTotal.toFixed(2)}</span>
+                    <span>${quantity} unidad(es) x $${price.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span class="font-semibold text-gray-800">$${vehicleTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </p>
                 ${brand ? `<p class="text-sm text-gray-500 mt-1">Marca: ${brand}</p>` : ''}
                 ${color ? `<p class="text-sm text-gray-500 mt-1">Color: ${color}</p>` : ''}
@@ -202,15 +202,15 @@ function calculateQuote() {
         });
     }
 
-    const discountInput = document.getElementById('discount');
-    const discountPercent = parseFloat(discountInput.value) || 0;
-    const discountAmount = subtotal * (discountPercent / 100);
-    const total = subtotal - discountAmount;
+    const total = subtotal;
     
     // Muestra los resultados en el resumen
-    document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-    document.getElementById('discount-amount').textContent = `-$${discountAmount.toFixed(2)}`;
-    document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('subtotal').textContent = `$${subtotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const discountRow = document.getElementById('discount-row'); 
+    if (discountRow) {
+        discountRow.style.display = 'none'; 
+    }
+    document.getElementById('total').textContent = `$${total.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
@@ -224,10 +224,15 @@ function printQuote() {
     const clientEmail = document.getElementById('client-email').value;
     const notes = document.getElementById('notes').value;
     const dealershipAddress = document.getElementById('dealership-address').value;
-    const salesperson = document.getElementById('salesperson').value; // Obtener el valor del vendedor
-    const subtotal = document.getElementById('subtotal').textContent;
-    const discountAmount = document.getElementById('discount-amount').textContent;
-    const total = document.getElementById('total').textContent;
+    const salesperson = document.getElementById('salesperson').value; 
+    
+    // Obtener los valores numéricos sin el símbolo "$" para formatear correctamente
+    const subtotalValue = parseFloat(document.getElementById('subtotal').textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
+    const totalValue = parseFloat(document.getElementById('total').textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
+
+    // Formatear los valores para la impresión
+    const subtotalPrintable = subtotalValue.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const totalPrintable = totalValue.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     // 2. Llenar el área de impresión con el nuevo diseño
     const printArea = document.querySelector('.print-area');
@@ -238,7 +243,14 @@ function printQuote() {
             /* Estilos específicos para impresión */
             @page {
                 size: A4;
-                margin: 1cm; /* Márgenes reducidos para maximizar espacio */
+                margin: 0.5cm; /* Elimina todos los márgenes */
+                /* Intenta suprimir encabezados y pies de página en la impresión */
+                @top-left { content: ""; }
+                @top-center { content: ""; }
+                @top-right { content: ""; }
+                @bottom-left { content: ""; }
+                @bottom-center { content: ""; }
+                @bottom-right { content: ""; }
             }
             body {
                 font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -249,106 +261,127 @@ function printQuote() {
                 width: 100%;
                 max-width: 21cm; /* Ancho de A4 menos márgenes */
                 margin: 0 auto;
-                padding: 0.5cm;
+                padding: 0.5cm; /* Ajustado para más espacio vertical */
                 box-sizing: border-box;
+                position: relative; 
+            }
+            .watermark {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0.10; /* Transparencia muy ligera */
+                z-index: -1; 
+                pointer-events: none; 
+                width: 70%; /* Ajusta el tamaño de la marca de agua */
+                height: auto;
             }
             .header-print {
                 display: flex;
-                justify-content: space-between; /* Alinea elementos a los extremos */
+                justify-content: space-between; 
                 align-items: center;
-                margin-bottom: 20px;
-                padding-bottom: 10px;
-                border-bottom: 2px solid #ddd;
+                margin-bottom: 15px; /* Espaciado reducido */
+                padding-bottom: 8px; /* Espaciado reducido */
+                border-bottom: 1px solid #ddd; /* Borde más sutil */
             }
             .header-print h1 {
-                font-size: 2.5em; /* Tamaño de fuente ajustado */
+                font-size: 1.4em; /* Tamaño de fuente ajustado */
                 color: #000;
                 margin: 0;
             }
             .header-print p {
-                font-size: 0.9em;
+                font-size: 0.85em; /* Tamaño de fuente ajustado */
                 color: #555;
-                margin: 2px 0;
+                margin: 1px 0; /* Espaciado reducido */
             }
             .header-print img {
-                height: 60px; /* Tamaño del logo ajustado */
+                height: 50px; /* Tamaño del logo ajustado */
                 width: auto;
             }
             .section-print {
-                margin-bottom: 20px;
-                padding: 15px;
+                margin-bottom: 15px; /* Espaciado reducido */
+                padding: 10px; /* Espaciado reducido */
                 border: 1px solid #eee;
                 border-radius: 5px;
-                background-color: #f9f9f9;
+                background-color: #f9f9f9; /* Color de fondo original */
             }
             .section-print h2 {
-                font-size: 1.5em;
+                font-size: 1.3em; /* Tamaño de fuente ajustado */
                 color: #333;
-                margin-bottom: 10px;
-                padding-bottom: 5px;
+                margin-bottom: 8px; /* Espaciado reducido */
+                padding-bottom: 4px; /* Espaciado reducido */
                 border-bottom: 1px solid #eee;
             }
             .section-print .grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 10px;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Ajustado para compactar */
+                gap: 8px; /* Espaciado reducido */
             }
             .section-print p {
-                font-size: 0.9em;
-                line-height: 1.4;
+                font-size: 0.85em; /* Tamaño de fuente ajustado */
+                line-height: 1.3; /* Interlineado ajustado */
             }
             .vehicle-item-print {
                 border: 1px solid #ddd;
-                padding: 10px;
+                padding: 8px; /* Espaciado reducido */
                 border-radius: 5px;
                 background-color: #fff;
-                margin-bottom: 10px;
+                margin-bottom: 8px; /* Espaciado reducido */
             }
             .vehicle-item-print .flex {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 5px;
+                margin-bottom: 3px;
             }
             .vehicle-item-print p {
                 margin: 0;
+                font-size: 0.85em; /* Tamaño de fuente ajustado */
+            }
+            .vehicle-item-print .font-bold {
+                font-size: 0.9em; /* Ajuste para el texto del modelo */
             }
             .summary-print {
-                margin-top: 30px;
-                padding: 15px;
+                margin-top: 20px; /* Espaciado reducido */
+                padding: 12px; /* Espaciado reducido */
                 border: 1px solid #ddd;
                 border-radius: 5px;
-                background-color: #fff;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                background-color: #fff; /* Color de fondo original */
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Sombra más sutil */
             }
             .summary-print .flex {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 5px 0;
+                padding: 4px 0; /* Espaciado reducido */
+            }
+            .summary-print span {
+                font-size: 0.9em; /* Tamaño de fuente ajustado */
             }
             .summary-print .total-row {
-                font-size: 1.8em;
+                font-size: 1.6em; /* Tamaño de fuente ajustado */
                 font-weight: bold;
-                border-top: 2px solid #eee;
-                margin-top: 10px;
-                padding-top: 10px;
-                color: #0056b3; /* Color para el total */
+                border-top: 1px solid #eee; /* Borde más sutil */
+                margin-top: 8px; /* Espaciado reducido */
+                padding-top: 8px; /* Espaciado reducido */
+                color: #0056b3; 
             }
             .footer-print {
-                margin-top: 30px;
+                margin-top: 20px; /* Espaciado reducido */
                 text-align: center;
-                font-size: 0.8em;
+                font-size: 0.75em; /* Tamaño de fuente ajustado */
                 color: #777;
             }
             .footer-print p {
-                margin: 3px 0;
+                margin: 2px 0; /* Espaciado reducido */
             }
         </style>
         <div class="print-container">
+            <img src="JACNEGRO.png" alt="Marca de Agua JAC" class="watermark">
+
             <div class="header-print">
                 <div class="text-left">
-                    <h1 class="text-4xl font-bold text-gray-900">Cotización de Vehículos</h1>
+                    <h1 class="text-4xl font-bold text-gray-900">PROFORMA</h1>
                     <p class="text-gray-600 text-lg">Concesionario JAC</p>
                     <p class="text-gray-500 text-sm mt-1">Fecha de cotización: <span id="print-date" class="font-semibold"></span></p>
                 </div>
@@ -374,15 +407,11 @@ function printQuote() {
                 <h2>Resumen de la Cotización</h2>
                 <div class="flex">
                     <span>Subtotal:</span>
-                    <span id="print-subtotal">$0.00</span>
-                </div>
-                <div class="flex">
-                    <span>Descuento:</span>
-                    <span id="print-discount">-$0.00</span>
+                    <span id="print-subtotal">$${subtotalPrintable}</span>
                 </div>
                 <div class="flex total-row">
                     <span>Total a Pagar:</span>
-                    <span id="print-total">$0.00</span>
+                    <span id="print-total">$${totalPrintable}</span>
                 </div>
             </div>
 
@@ -406,9 +435,7 @@ function printQuote() {
     document.getElementById('print-client-phone').textContent = clientPhone || 'No especificado';
     document.getElementById('print-client-email').textContent = clientEmail || 'No especificado';
     document.getElementById('print-notes').textContent = notes || 'No hay notas adicionales.';
-    document.getElementById('print-subtotal').textContent = subtotal;
-    document.getElementById('print-discount').textContent = discountAmount;
-    document.getElementById('print-total').textContent = total;
+    // Los subtotales y totales ya se rellenan directamente en el innerHTML con toLocaleString
     document.getElementById('print-date').textContent = new Date().toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
@@ -441,14 +468,21 @@ function printQuote() {
             const year = item.querySelector('.year-input').value;
             const motor = item.querySelector('.motor-input').value;
             
+            const vehicleTotal = quantity * price;
+
+            // Formatear el precio unitario y el total del vehículo
+            const formattedPrice = price.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const formattedVehicleTotal = vehicleTotal.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
             const printItem = document.createElement('div');
-            printItem.className = 'vehicle-item-print'; // Usa la clase de impresión
+            printItem.className = 'vehicle-item-print'; 
             printItem.innerHTML = `
                 <div class="flex">
                     <p class="font-bold text-gray-900">${model} <span class="font-normal text-gray-600">(${quantity} unidad${quantity > 1 ? 'es' : ''})</span></p>
-                    <p class="font-bold text-blue-600">$${(quantity * price).toFixed(2)}</p>
+                    <p class="font-bold text-blue-600">$${formattedVehicleTotal}</p>
                 </div>
                 <div class="grid">
+                    <p><strong>Precio Unitario:</strong> $${formattedPrice}</p>
                     ${brand ? `<p><strong>Marca:</strong> ${brand}</p>` : ''}
                     ${color ? `<p><strong>Color:</strong> ${color}</p>` : ''}
                     ${year ? `<p><strong>Año:</strong> ${year}</p>` : ''}
@@ -473,9 +507,8 @@ function clearForm() {
     document.getElementById('client-phone').value = '';
     document.getElementById('client-email').value = '';
     document.getElementById('notes').value = '';
-    document.getElementById('discount').value = '0';
     document.getElementById('dealership-address').value = ''; 
-    document.getElementById('salesperson').value = ''; // Limpiar el campo del vendedor
+    document.getElementById('salesperson').value = ''; 
     
     // Limpia el contenedor de vehículos
     const vehiclesContainer = document.getElementById('vehicles-container');
@@ -488,9 +521,6 @@ function clearForm() {
 
 // --- 3. INICIALIZACIÓN ---
 
-// Agrega event listeners al input de descuento para recalcular automáticamente
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('discount').addEventListener('input', calculateQuote);
-    // Inicializa el formulario agregando un vehículo al cargar la página
     addVehicle(); 
 });
