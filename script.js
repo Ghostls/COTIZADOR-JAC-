@@ -1,7 +1,8 @@
 // --- 1. CONFIGURACIÓN INICIAL Y DATOS ---
 
 // Modelos de vehículos disponibles con precios base
-// ¡IMPORTANTE! Se recomienda llenar los precios base para que la funcionalidad sea más útil.
+// NOTA: Con la nueva funcionalidad, basePrice ya no se usará para el cálculo principal,
+// sino como un valor sugerido inicial al añadir un vehículo.
 const vehicleModels = [
     { id: 'jac-x100', name: "X100", basePrice: 0 },
     { id: 'jac-urban-chasis-3ton', name: "Urban Chasis 3 TON", basePrice: 0 },
@@ -14,6 +15,7 @@ const vehicleModels = [
     { id: 'jac-leyenda-chasis-20ton', name: "Leyenda Chasis - 20 TON", basePrice: 0 },
     { id: 'jac-cavalino-240hp-22ton', name: "Cavalino 240HP - 22 TON", basePrice: 0 },
     { id: 'jac-chuto-4251-380hp-40ton', name: "Chuto 4251 380HP - 40 TON", basePrice: 0 },
+    { id: 'jac-chuto-4251-430hp-45ton', name: "Chuto 4251 430HP - 45 TON", basePrice: 0 },
     { id: 'jac-la-venezolana-gasolina-4x2', name: "La Venezolana - Gasolina 4X2", basePrice: 0 },
     { id: 'jac-la-venezolana-diesel-4x2', name: "La Venezolana - Diesel 4X2", basePrice: 0 },
     { id: 'jac-la-venezolana-diesel-4x4', name: "La Venezolana - Diesel 4X4", basePrice: 0 },
@@ -66,6 +68,10 @@ const vehicleModels = [
 // Contador para generar IDs únicos para cada vehículo agregado
 let vehicleCounter = 0;
 
+// La tasa de cambio ahora es solo referencial para la impresión si el precio se introdujo en USD
+// No se usará para CONVERTIR, sino para INFORMAR.
+const EXCHANGE_RATE_VES_USD_DISPLAY = 36.5; // Ejemplo: 1 USD = 36.5 VES. Solo para mostrar en impresión.
+
 // Referencias a elementos del DOM para evitar múltiples selecciones
 const dom = {
     vehiclesContainer: document.getElementById('vehicles-container'),
@@ -80,19 +86,49 @@ const dom = {
     clientEmailInput: document.getElementById('client-email'),
     notesInput: document.getElementById('notes'),
     dealershipAddressInput: document.getElementById('dealership-address'),
-    salespersonInput: document.getElementById('salesperson')
+    salespersonInput: document.getElementById('salesperson'),
+    paymentMethodSelect: document.getElementById('payment-method')
 };
 
 // --- 2. FUNCIONES DE UTILIDAD ---
 
 /**
- * Formatea un número como moneda USD.
+ * Formatea un número como moneda USD, VES o USDT.
  * @param {number} amount - El valor numérico a formatear.
+ * @param {string} currencyCode - Código de la moneda ('USD', 'VES', 'USDT').
  * @returns {string} El valor formateado como string de moneda.
  */
-const formatCurrency = (amount) => {
-    return amount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatCurrency = (amount, currencyCode = 'USD') => {
+    let symbol = '$';
+    let locale = 'en-US';
+    let minimumFractionDigits = 2;
+    let maximumFractionDigits = 2;
+
+    if (currencyCode === 'VES') {
+        symbol = 'Bs';
+        locale = 'es-VE';
+    } else if (currencyCode === 'USDT') {
+        symbol = 'USDT';
+    }
+
+    const formatter = new Intl.NumberFormat(locale, {
+        style: 'decimal', // Usamos decimal para mayor control sobre el símbolo
+        minimumFractionDigits: minimumFractionDigits,
+        maximumFractionDigits: maximumFractionDigits,
+        useGrouping: true
+    });
+
+    let formatted = formatter.format(amount);
+    if (currencyCode === 'USD') {
+        return `${symbol} ${formatted}`;
+    } else if (currencyCode === 'USDT') {
+        return `${symbol} ${formatted}`;
+    } else if (currencyCode === 'VES') {
+        return `${symbol} ${formatted}`;
+    }
+    return formatted; // Debería cubrirse por los if/else if
 };
+
 
 // --- 3. FUNCIONES PRINCIPALES DE GESTIÓN DE VEHÍCULOS ---
 
@@ -101,8 +137,10 @@ const formatCurrency = (amount) => {
  * @returns {string} HTML de las opciones de select.
  */
 const generateModelOptions = () => {
+    // Al generar opciones, el value es el nombre del modelo para mapear, no el precio base.
+    // El precio se llenará en el input de precio.
     return vehicleModels.map(model =>
-        `<option value="${model.basePrice}">${model.name}</option>`
+        `<option value="${model.id}" data-base-price="${model.basePrice}">${model.name}</option>`
     ).join('');
 };
 
@@ -113,10 +151,11 @@ const generateModelOptions = () => {
 function addVehicle() {
     vehicleCounter++;
     const vehicleId = `vehicle-${vehicleCounter}`;
+    const initialBasePrice = vehicleModels[0] ? vehicleModels[0].basePrice : 0; // Precio inicial del primer modelo
 
     const vehicleDiv = document.createElement('div');
     vehicleDiv.className = 'vehicle-item p-4 border border-gray-200 rounded-lg bg-gray-50 mb-4';
-    vehicleDiv.dataset.id = vehicleId; // ID único y claro
+    vehicleDiv.dataset.id = vehicleId;
 
     vehicleDiv.innerHTML = `
         <div class="flex justify-between items-center mb-4">
@@ -128,7 +167,7 @@ function addVehicle() {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Modelo:</label>
-                <select onchange="updatePrice(this)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 model-input">
+                <select onchange="updatePriceInput(this)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 model-input">
                     ${generateModelOptions()}
                 </select>
             </div>
@@ -137,8 +176,8 @@ function addVehicle() {
                 <input type="number" value="1" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 quantity-input">
             </div>
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Precio Unitario (USD):</label>
-                <input type="number" step="0.01" value="${vehicleModels[0].basePrice}" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 price-input">
+                <label class="block text-sm font-medium text-gray-700 mb-1 price-label">Precio Unitario (USD):</label>
+                <input type="number" step="0.01" value="${initialBasePrice}" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 price-input">
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Marca:</label>
@@ -162,24 +201,58 @@ function addVehicle() {
     dom.vehiclesContainer.appendChild(vehicleDiv);
 
     // Agrega event listeners para calcular automáticamente cuando los valores cambian
-    const inputsToListen = vehicleDiv.querySelectorAll('.quantity-input, .price-input, .model-input, .brand-input, .color-input, .year-input, .motor-input');
+    const inputsToListen = vehicleDiv.querySelectorAll('.quantity-input, .price-input, .brand-input, .color-input, .year-input, .motor-input');
     inputsToListen.forEach(input => input.addEventListener('input', calculateQuote));
 
-    // Calcula la cotización inmediatamente después de agregar un vehículo
-    calculateQuote();
+    // También escucha cambios en el select de modalidad de pago para actualizar los labels
+    dom.paymentMethodSelect.addEventListener('change', updatePriceInputLabels);
+    // Llamada inicial para asegurar que el label del precio unitario sea correcto al añadir el primer vehículo
+    updatePriceInputLabels();
+    calculateQuote(); // Recalcula la cotización
 }
 
 /**
- * Actualiza el precio del vehículo cuando se selecciona un modelo del dropdown.
+ * Actualiza el valor del input de precio unitario y su label cuando se selecciona un modelo del dropdown.
  * @param {HTMLSelectElement} selectElement - El elemento select que fue cambiado.
  */
-function updatePrice(selectElement) {
+function updatePriceInput(selectElement) {
     const vehicleDiv = selectElement.closest('.vehicle-item');
     const priceInput = vehicleDiv.querySelector('.price-input');
-    // El valor de la opción es el precio base que guardamos en el HTML
-    priceInput.value = selectElement.value;
-    // Recalcula la cotización
-    calculateQuote();
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const basePrice = parseFloat(selectedOption.dataset.basePrice) || 0;
+
+    // Actualiza el valor del input de precio unitario con el precio base del modelo
+    priceInput.value = basePrice;
+    calculateQuote(); // Recalcula la cotización
+}
+
+
+/**
+ * Actualiza los labels de "Precio Unitario" en cada formulario de vehículo
+ * para reflejar la modalidad de pago seleccionada.
+ */
+function updatePriceInputLabels() {
+    const paymentMethod = dom.paymentMethodSelect.value;
+    const priceLabels = document.querySelectorAll('.price-label'); // Selecciona todos los labels de precio
+    let labelText = 'Precio Unitario (';
+
+    switch (paymentMethod) {
+        case 'USD':
+            labelText += 'USD):';
+            break;
+        case 'VES':
+            labelText += 'Bs):';
+            break;
+        case 'USDT':
+            labelText += 'USDT):';
+            break;
+        default:
+            labelText += 'USD):'; // Por defecto
+    }
+
+    priceLabels.forEach(label => {
+        label.textContent = labelText;
+    });
 }
 
 /**
@@ -193,12 +266,21 @@ function removeVehicle(button) {
 }
 
 /**
- * Calcula la cotización total y actualiza el resumen.
+ * Calcula la cotización total y actualiza el resumen, basándose en la modalidad de pago
+ * y las entradas manuales del coordinador.
  */
 function calculateQuote() {
     const vehicles = document.querySelectorAll('.vehicle-item');
-    let subtotal = 0;
+    let totalAmount = 0; // Este será el total en la moneda seleccionada
     dom.quoteSummary.innerHTML = ''; // Limpia el contenido anterior
+
+    const paymentMethod = dom.paymentMethodSelect.value;
+    let currencySymbol = '';
+    switch(paymentMethod) {
+        case 'USD': currencySymbol = '$'; break;
+        case 'VES': currencySymbol = 'Bs'; break;
+        case 'USDT': currencySymbol = 'USDT'; break;
+    }
 
     if (vehicles.length === 0) {
         dom.quoteSummary.innerHTML = '<p class="text-gray-500 italic text-center">Agregue vehículos y calcule la cotización para ver el resumen.</p>';
@@ -207,13 +289,13 @@ function calculateQuote() {
             const modelSelect = vehicle.querySelector('.model-input');
             const model = modelSelect.options[modelSelect.selectedIndex].text;
             const quantity = parseInt(vehicle.querySelector('.quantity-input').value) || 0;
-            const price = parseFloat(vehicle.querySelector('.price-input').value) || 0;
+            const price = parseFloat(vehicle.querySelector('.price-input').value) || 0; // Precio en la moneda seleccionada
             const brand = vehicle.querySelector('.brand-input').value;
             const color = vehicle.querySelector('.color-input').value;
             const year = vehicle.querySelector('.year-input').value;
             const motor = vehicle.querySelector('.motor-input').value;
-            const vehicleTotal = quantity * price;
-            subtotal += vehicleTotal;
+            const vehicleTotal = quantity * price; // Total de este vehículo en la moneda seleccionada
+            totalAmount += vehicleTotal;
 
             // Crea el HTML para el resumen de cada vehículo
             const summaryItem = document.createElement('div');
@@ -221,8 +303,8 @@ function calculateQuote() {
             summaryItem.innerHTML = `
                 <p class="font-semibold text-gray-800">${model}</p>
                 <p class="text-gray-600 flex justify-between">
-                    <span>${quantity} unidad(es) x $${formatCurrency(price)}</span>
-                    <span class="font-semibold text-gray-800">$${formatCurrency(vehicleTotal)}</span>
+                    <span>${quantity} unidad(es) x ${currencySymbol} ${formatCurrency(price, paymentMethod)}</span>
+                    <span class="font-semibold text-gray-800">${currencySymbol} ${formatCurrency(vehicleTotal, paymentMethod)}</span>
                 </p>
                 ${brand ? `<p class="text-sm text-gray-500 mt-1">Marca: ${brand}</p>` : ''}
                 ${color ? `<p class="text-sm text-gray-500 mt-1">Color: ${color}</p>` : ''}
@@ -233,15 +315,14 @@ function calculateQuote() {
         });
     }
 
-    const total = subtotal;
     // Muestra los resultados en el resumen
-    dom.subtotalDisplay.textContent = `$${formatCurrency(subtotal)}`;
+    dom.subtotalDisplay.textContent = formatCurrency(totalAmount, paymentMethod); // Subtotal es igual al total en esta lógica
+    dom.totalDisplay.textContent = formatCurrency(totalAmount, paymentMethod);
 
     // Oculta la fila de descuento si no se usa
     if (dom.discountRow) {
         dom.discountRow.style.display = 'none';
     }
-    dom.totalDisplay.textContent = `$${formatCurrency(total)}`;
 }
 
 // --- 4. FUNCIONES DE IMPRESIÓN ---
@@ -258,14 +339,11 @@ function printQuote() {
     const notes = dom.notesInput.value;
     const dealershipAddress = dom.dealershipAddressInput.value;
     const salesperson = dom.salespersonInput.value;
+    const paymentMethodText = dom.paymentMethodSelect.options[dom.paymentMethodSelect.selectedIndex].text;
+    const paymentMethodValue = dom.paymentMethodSelect.value;
 
-    // Obtener los valores numéricos del resumen (ya formateados en calculateQuote)
-    const subtotalValue = parseFloat(dom.subtotalDisplay.textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
-    const totalValue = parseFloat(dom.totalDisplay.textContent.replace('$', '').replace(/\./g, '').replace(',', '.'));
-
-    // Formatear los valores para la impresión
-    const subtotalPrintable = formatCurrency(subtotalValue);
-    const totalPrintable = formatCurrency(totalValue);
+    let totalAmountForPrint = 0;
+    let currencySymbolForPrint = '';
 
     // Recopilar los detalles de cada vehículo para la impresión
     let vehiclesHtmlForPrint = '';
@@ -273,20 +351,28 @@ function printQuote() {
         const modelSelect = vehicle.querySelector('.model-input');
         const model = modelSelect.options[modelSelect.selectedIndex].text;
         const quantity = parseInt(vehicle.querySelector('.quantity-input').value) || 0;
-        const price = parseFloat(vehicle.querySelector('.price-input').value) || 0;
+        const price = parseFloat(vehicle.querySelector('.price-input').value) || 0; // Precio en la moneda seleccionada
         const brand = vehicle.querySelector('.brand-input').value;
         const color = vehicle.querySelector('.color-input').value;
         const year = vehicle.querySelector('.year-input').value;
         const motor = vehicle.querySelector('.motor-input').value;
-        const vehicleTotal = quantity * price;
+        const vehicleTotal = quantity * price; // Total de este vehículo en la moneda seleccionada
+        totalAmountForPrint += vehicleTotal; // Sumamos para el total general
+
+        currencySymbolForPrint = ''; // Reiniciar para cada vehículo, luego se establecerá por el método de pago
+        switch(paymentMethodValue) {
+            case 'USD': currencySymbolForPrint = '$'; break;
+            case 'VES': currencySymbolForPrint = 'Bs'; break;
+            case 'USDT': currencySymbolForPrint = 'USDT'; break;
+        }
 
         vehiclesHtmlForPrint += `
             <div class="vehicle-item-print">
-                <div class="flex">
+                <div class="flex justify-between items-center mb-1">
                     <p class="font-bold">${model}</p>
-                    <p>Subtotal: $${formatCurrency(vehicleTotal)}</p>
+                    <p class="text-right">Subtotal: ${currencySymbolForPrint} ${formatCurrency(vehicleTotal, paymentMethodValue)}</p>
                 </div>
-                <p>${quantity} unidad(es) x $${formatCurrency(price)}</p>
+                <p>${quantity} unidad(es) x ${currencySymbolForPrint} ${formatCurrency(price, paymentMethodValue)}</p>
                 ${brand ? `<p class="text-sm">Marca: ${brand}</p>` : ''}
                 ${color ? `<p class="text-sm">Color: ${color}</p>` : ''}
                 ${year ? `<p class="text-sm">Año: ${year}</p>` : ''}
@@ -296,6 +382,16 @@ function printQuote() {
     });
 
     const currentDate = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Determinar el símbolo final y el texto del total
+    let finalCurrencySymbol = '';
+    switch(paymentMethodValue) {
+        case 'USD': finalCurrencySymbol = '$'; break;
+        case 'VES': finalCurrencySymbol = 'Bs'; break;
+        case 'USDT': finalCurrencySymbol = 'USDT'; break;
+    }
+    const finalTotalFormatted = formatCurrency(totalAmountForPrint, paymentMethodValue);
+
 
     // 2. Llenar el área de impresión con el nuevo diseño
     dom.printArea.innerHTML = `
@@ -451,10 +547,10 @@ function printQuote() {
             <div class="section-print">
                 <h2>Datos del Cliente</h2>
                 <div class="grid">
-                    <p><strong>Nombre:</strong> <span id="print-client-name">${clientName}</span></p>
-                    <p><strong>Cédula/RIF:</strong> <span id="print-client-id">${clientId}</span></p>
-                    <p><strong>Teléfono:</strong> <span id="print-client-phone">${clientPhone}</span></p>
-                    <p><strong>Correo:</strong> <span id="print-client-email">${clientEmail}</span></p>
+                    <p><strong>Nombre:</strong> <span id="print-client-name">${clientName || 'N/A'}</span></p>
+                    <p><strong>Cédula/RIF:</strong> <span id="print-client-id">${clientId || 'N/A'}</span></p>
+                    <p><strong>Teléfono:</strong> <span id="print-client-phone">${clientPhone || 'N/A'}</span></p>
+                    <p><strong>Correo:</strong> <span id="print-client-email">${clientEmail || 'N/A'}</span></p>
                 </div>
             </div>
 
@@ -469,12 +565,17 @@ function printQuote() {
                 <h2>Resumen de la Cotización</h2>
                 <div class="flex">
                     <span>Subtotal:</span>
-                    <span id="print-subtotal">$${subtotalPrintable}</span>
+                    <span id="print-subtotal">${finalCurrencySymbol} ${finalTotalFormatted}</span>
+                </div>
+                <div class="flex">
+                    <span>Modalidad de Pago:</span>
+                    <span id="print-payment-method">${paymentMethodText}</span>
                 </div>
                 <div class="flex total-row">
                     <span>Total a Pagar:</span>
-                    <span id="print-total">$${totalPrintable}</span>
+                    <span id="print-total">${finalCurrencySymbol} ${finalTotalFormatted}</span>
                 </div>
+                ${paymentMethodValue === 'VES' ? `<p class="text-xs text-gray-600 text-right mt-2">Tasa de cambio de referencia USD a VES: 1 USD = Bs ${formatCurrency(EXCHANGE_RATE_VES_USD_DISPLAY, '')}</p>` : ''}
             </div>
 
             <div class="section-print">
@@ -485,7 +586,7 @@ function printQuote() {
             <div class="footer-print">
                 <p><strong>Dirección del Concesionario:</strong> <span id="print-dealership-address">${dealershipAddress || 'No especificada'}</span></p>
                 <p><strong>Vendedor:</strong> <span id="print-salesperson">${salesperson || 'No especificado'}</span></p>
-                <p>Esta proforma es valida por 24 horas y esta sujeta a la disponibilidad del inventario</p>
+                <p>Esta proforma es válida por 24 horas y está sujeta a la disponibilidad del inventario</p>
             </div>
         </div>
     `;
@@ -494,5 +595,28 @@ function printQuote() {
     window.print();
 }
 
+// Limpiar el formulario y el resumen
+function clearForm() {
+    dom.clientNameInput.value = '';
+    dom.clientIdInput.value = '';
+    dom.clientPhoneInput.value = '';
+    dom.clientEmailInput.value = '';
+    dom.notesInput.value = '';
+    dom.dealershipAddressInput.value = '';
+    dom.salespersonInput.value = '';
+    dom.vehiclesContainer.innerHTML = ''; // Elimina todos los vehículos
+    vehicleCounter = 0; // Reinicia el contador de vehículos
+    dom.paymentMethodSelect.value = 'USD'; // Restablece la modalidad de pago a USD
+    updatePriceInputLabels(); // Actualiza los labels de precio unitario
+    calculateQuote(); // Recalcula para limpiar el resumen
+}
+
 // Opcional: Llamar a calculateQuote al cargar la página si ya hay vehículos por defecto
-document.addEventListener('DOMContentLoaded', calculateQuote);
+document.addEventListener('DOMContentLoaded', () => {
+    // Agrega un event listener al selector de modalidad de pago para que recalcule al cambiar
+    dom.paymentMethodSelect.addEventListener('change', () => {
+        updatePriceInputLabels(); // Actualiza los labels de precio cuando cambia la modalidad de pago
+        calculateQuote();
+    });
+    calculateQuote();
+});
