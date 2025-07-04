@@ -9,6 +9,8 @@ const vehicleModels = [
     { id: 'jac-urban-ferretero-3ton', name: "Urban Ferretero 3 TON", basePrice: 0 },
     { id: 'jac-c-3500-4x4', name: "C-3500 4x4", basePrice: 0 },
     { id: 'jac-doble-cabina', name: "Doble Cabina", basePrice: 0 },
+    { id: 'jac-pionero-5TON', name: "Pionero Chasis - 5TON", basePrice: 0 },
+    { id: 'jac-pionero-5TON', name: "Pionero Ferretero - 5TON", basePrice: 0 },
     { id: 'jac-6t-chasis-6ton', name: "6T Chasis 6 TON", basePrice: 0 },
     { id: 'jac-6t-ferretero-6ton', name: "6T Ferretero 6 TON", basePrice: 0 },
     { id: 'jac-bufalo-12ton', name: "Búfalo 12 TON", basePrice: 0 },
