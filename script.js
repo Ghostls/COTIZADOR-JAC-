@@ -539,7 +539,7 @@ function printQuote() {
 
             <div class="header-print">
                 <div class="text-left">
-                    <h1 class="text-4xl font-bold text-gray-900">PROFORMA</h1>
+                    <h1 class="text-4xl font-bold text-gray-900"></h1>
                     <p class="text-gray-600 text-lg">Concesionario JAC</p>
                     <p class="text-gray-500 text-sm mt-1">Fecha de cotización: <span id="print-date" class="font-semibold">${currentDate}</span></p>
                 </div>
@@ -586,9 +586,9 @@ function printQuote() {
             </div>
 
             <div class="footer-print">
-                <p><strong>Dirección del Concesionario:</strong> <span id="print-dealership-address">${dealershipAddress || 'No especificada'}</span></p>
-                <p><strong>Vendedor:</strong> <span id="print-salesperson">${salesperson || 'No especificado'}</span></p>
-                <p>Esta proforma es válida por 24 horas y está sujeta a la disponibilidad del inventario</p>
+                <p><strong>Dirección del Concesionario:</strong> <span id="print-dealership-address">${dealershipAddress}</span></p>
+                <p><strong>Vendedor:</strong> <span id="print-salesperson">${salesperson}</span></p>
+                <p>Esta proforma es válida por 12 horas y está sujeta a la disponibilidad del inventario</p>
             </div>
         </div>
     `;
