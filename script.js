@@ -541,7 +541,7 @@ function printQuote() {
                 <div class="text-left">
                     <h1 class="text-4xl font-bold text-gray-900"></h1>
                     <p class="text-gray-600 text-lg">Concesionario JAC</p>
-                    <p class="text-gray-500 text-sm mt-1">Fecha de cotización: <span id="print-date" class="font-semibold">${currentDate}</span></p>
+                    <p class="text-gray-500 text-sm mt-1">Fecha: <span id="print-date" class="font-semibold">${currentDate}</span></p>
                 </div>
                 <img src="JACNEGRO.png" alt="Logo de la Empresa">
             </div>
