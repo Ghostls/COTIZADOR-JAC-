@@ -577,9 +577,7 @@ function printQuote() {
                     <span>Total a Pagar:</span>
                     <span id="print-total">${finalCurrencySymbol} ${finalTotalFormatted}</span>
                 </div>
-                ${paymentMethodValue === 'VES' ? `<p class="text-xs text-gray-600 text-right mt-2">Tasa de cambio de referencia USD a VES: 1 USD = Bs ${formatCurrency(EXCHANGE_RATE_VES_USD_DISPLAY, '')}</p>` : ''}
-            </div>
-
+                
             <div class="section-print">
                 <h3>Notas Adicionales:</h3>
                 <p id="print-notes" class="italic">${notes || 'N/A'}</p>
