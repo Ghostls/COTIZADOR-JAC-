@@ -374,7 +374,7 @@ function printQuote() {
             <div class="vehicle-item-print">
                 <div class="flex justify-between items-center mb-1">
                     <p class="font-bold">${model}</p>
-                    <p class="text-right">Subtotal: ${currencySymbolForPrint} ${formatCurrency(vehicleTotal, paymentMethodValue)}</p>
+                    <p class="text-right">Subtotal: ${currencySymbolForPrint} ${formatCurrency(price * quantity, paymentMethodValue)}</p>
                 </div>
                 <p>${quantity} unidad(es) x ${currencySymbolForPrint} ${formatCurrency(price, paymentMethodValue)}</p>
                 ${brand ? `<p class="text-sm">Marca: ${brand}</p>` : ''}
@@ -403,7 +403,7 @@ function printQuote() {
             /* Estilos específicos para impresión */
             @page {
                 size: A4;
-                margin: 0.5cm;
+                margin: 0.8cm; /* Márgenes ligeramente ampliados para un look más limpio */
                 /* Intenta suprimir encabezados y pies de página en la impresión */
                 @top-left { content: ""; }
                 @top-center { content: ""; }
@@ -413,7 +413,7 @@ function printQuote() {
                 @bottom-right { content: ""; }
             }
             body {
-                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Fuente más moderna */
                 color: #333;
                 -webkit-print-color-adjust: exact; /* Asegura la impresión de colores de fondo */
             }
@@ -421,119 +421,182 @@ function printQuote() {
                 width: 100%;
                 max-width: 21cm; /* Ancho de A4 menos márgenes */
                 margin: 0 auto;
-                padding: 0.5cm;
+                padding: 0.8cm;
                 box-sizing: border-box;
                 position: relative;
+                background: #fff; /* Fondo blanco */
+                border: 1px solid #eee; /* Borde ligero */
+                box-shadow: 0 0 10px rgba(0,0,0,0.05); /* Sombra sutil para un efecto "papel" */
             }
             .watermark {
                 position: absolute;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                opacity: 0.10; /* Transparencia muy ligera */
+                opacity: 0.08; /* Marca de agua muy sutil */
                 z-index: -1;
                 pointer-events: none;
-                width: 70%; /* Ajusta el tamaño de la marca de agua */
+                width: 60%; /* Ajusta el tamaño de la marca de agua */
                 height: auto;
             }
+
+            /* Encabezado */
             .header-print {
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-                padding-bottom: 8px;
-                border-bottom: 1px solid #ddd;
+                align-items: flex-start; /* Alinea arriba para evitar que el logo empuje el texto */
+                margin-bottom: 20px; /* Reducido */
+                padding-bottom: 10px; /* Reducido */
+                border-bottom: 3px solid #4875a4; /* Línea inferior más gruesa con color JAC Rojo */
             }
             .header-print h1 {
-                font-size: 1.4em;
-                color: #000;
+                font-size: 1.6em; /* Un poco más pequeño para caber */
+                color: #0033A0; /* Color JAC Azul */
                 margin: 0;
+                font-weight: bold;
+                line-height: 1.2;
             }
             .header-print p {
-                font-size: 0.85em;
-                color: #555;
-                margin: 1px 0;
+                font-size: 0.85em; /* Ligeramente más pequeño */
+                color: #666; /* Gris neutro */
+                margin: 1px 0; /* Reducido */
             }
-            .header-print img {
-                height: 50px;
+            .header-print .logo {
+                height: 55px; /* Logo un poco más pequeño */
                 width: auto;
             }
+
+            /* Secciones Generales */
             .section-print {
-                margin-bottom: 15px;
-                padding: 10px;
-                border: 1px solid #eee;
-                border-radius: 5px;
-                background-color: #f9f9f9;
+                margin-bottom: 15px; /* Reducido */
+                padding: 12px; /* Reducido */
+                border: 1px solid #0033A0; /* Borde de sección con color JAC Azul */
+                border-radius: 8px;
+                background-color: #F8F9FA; /* Fondo ligeramente gris para contraste */
             }
             .section-print h2 {
-                font-size: 1.3em;
-                color: #333;
-                margin-bottom: 8px;
-                padding-bottom: 4px;
-                border-bottom: 1px solid #eee;
+                font-size: 1.3em; /* Un poco más pequeño */
+                color: #0033A0; /* Título de sección con color JAC Azul */
+                margin-bottom: 8px; /* Reducido */
+                padding-bottom: 6px; /* Reducido */
+                border-bottom: 2px solid #4875a4; /* Línea de título con color JAC Rojo */
+                font-weight: bold;
             }
             .section-print .grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                gap: 8px;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Columnas un poco más estrechas */
+                gap: 8px; /* Reducido */
             }
             .section-print p {
-                font-size: 0.85em;
-                line-height: 1.3;
+                font-size: 0.85em; /* Ligeramente más pequeño */
+                line-height: 1.3; /* Ajuste de línea */
+                margin: 0;
             }
+            .section-print strong {
+                color: #333; /* Texto en negrita más oscuro */
+            }
+
+            /* Detalles del Vehículo */
             .vehicle-item-print {
                 border: 1px solid #ddd;
-                padding: 8px;
-                border-radius: 5px;
+                padding: 8px; /* Reducido */
+                border-radius: 6px;
                 background-color: #fff;
-                margin-bottom: 8px;
+                margin-bottom: 8px; /* Reducido */
+                box-shadow: 0 1px 2px rgba(0,0,0,0.02); /* Sombra más sutil */
             }
             .vehicle-item-print .flex {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 3px;
+                margin-bottom: 3px; /* Reducido */
             }
             .vehicle-item-print p {
                 margin: 0;
-                font-size: 0.85em;
+                font-size: 0.85em; /* Ligeramente más pequeño */
+                color: #555;
             }
             .vehicle-item-print .font-bold {
-                font-size: 0.9em;
+                font-size: 0.95em; /* Ajustado */
+                font-weight: bold;
+                color: #0033A0; /* Nombre del vehículo en azul JAC */
             }
+
+            /* Resumen de Cotización */
             .summary-print {
-                margin-top: 20px;
-                padding: 12px;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                background-color: #fff;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                margin-top: 20px; /* Reducido */
+                padding: 15px; /* Reducido */
+                border: 2px solid #0033A0; /* Borde más pronunciado y azul JAC */
+                border-radius: 8px;
+                background-color: #E6F0FF; /* Fondo azul muy claro para el resumen */
+                box-shadow: 0 2px 4px rgba(0,0,0,0.08); /* Sombra sutil */
+            }
+            .summary-print h2 {
+                font-size: 1.4em; /* Un poco más pequeño */
+                color: #0033A0;
+                margin-bottom: 12px; /* Reducido */
+                padding-bottom: 6px; /* Reducido */
+                border-bottom: 2px solidrgb(51, 105, 180);
+                font-weight: bold;
             }
             .summary-print .flex {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 4px 0;
+                padding: 5px 0; /* Reducido */
+                border-bottom: 1px dashed #cce0ff; /* Línea punteada suave */
+            }
+            .summary-print .flex:last-of-type {
+                border-bottom: none; /* Elimina la línea en el último elemento */
             }
             .summary-print span {
-                font-size: 0.9em;
+                font-size: 0.95em; /* Ajustado */
+                color: #333;
             }
             .summary-print .total-row {
-                font-size: 1.6em;
+                font-size: 1.6em; /* Total un poco más pequeño */
                 font-weight: bold;
-                border-top: 1px solid #eee;
-                margin-top: 8px;
-                padding-top: 8px;
-                color: #0056b3;
+                border-top: 2px solidrgb(43, 116, 148); /* Línea divisoria del total en rojo JAC */
+                margin-top: 12px; /* Reducido */
+                padding-top: 12px; /* Reducido */
+                color: #0033A0; /* Color del total en azul JAC */
             }
+            .summary-print .total-row span:last-child {
+                color:rgb(0, 38, 255); /* El monto final en rojo JAC */
+            }
+
+            /* Notas Adicionales */
+            .notes-section-print { /* Nueva clase para las notas para mejor control */
+                margin-top: 15px; /* Reducido */
+                padding: 12px; /* Reducido */
+                background-color: #FFF3E0; /* Fondo más suave para las notas (naranja pálido) */
+                border: 1px solidrgb(36, 105, 157); /* Borde en tono naranja/amarillo */
+                border-radius: 8px;
+            }
+            .notes-section-print h3 {
+                font-size: 1.1em; /* Un poco más pequeño */
+                color: #0033A0; /* Título de notas en azul JAC */
+                margin-bottom: 6px; /* Reducido */
+            }
+            .notes-section-print p {
+                font-size: 0.85em; /* Más pequeño para ahorrar espacio */
+                color: #555;
+                line-height: 1.4; /* Ajuste de línea */
+            }
+
+            /* Pie de página */
             .footer-print {
-                margin-top: 20px;
+                margin-top: 20px; /* Reducido */
                 text-align: center;
-                font-size: 0.75em;
+                font-size: 0.75em; /* Más pequeño */
                 color: #777;
+                border-top: 1px solid #ddd;
+                padding-top: 12px; /* Reducido */
             }
             .footer-print p {
-                margin: 2px 0;
+                margin: 2px 0; /* Reducido */
+            }
+            .footer-print .important-note {
+                color: #4875a4; /* Nota importante en rojo JAC */
+                font-weight: bold;
+                margin-top: 8px; /* Reducido */
             }
         </style>
         <div class="print-container">
@@ -541,11 +604,11 @@ function printQuote() {
 
             <div class="header-print">
                 <div class="text-left">
-                    <h1 class="text-4xl font-bold text-gray-900"></h1>
-                    <p class="text-gray-600 text-lg">Concesionario JAC Obelisco</p>
-                    <p class="text-gray-500 text-sm mt-1">Fecha: <span id="print-date" class="font-semibold">${currentDate}</span></p>
+                    <h1>PROFORMA</h1>
+                    <p>Concesionario JAC Obelisco</p>
+                    <p><strong>Fecha:</strong> <span id="print-date">${currentDate}</span></p>
                 </div>
-                <img src="JACNEGRO.png" alt="Logo de la Empresa">
+                <img src="JACNEGRO.png" alt="Logo de JAC Motors" class="logo">
             </div>
 
             <div class="section-print">
@@ -579,16 +642,17 @@ function printQuote() {
                     <span>Total a Pagar:</span>
                     <span id="print-total">${finalCurrencySymbol} ${finalTotalFormatted}</span>
                 </div>
-                
-            <div class="section-print">
+            </div>
+            
+            <div class="notes-section-print">
                 <h3>Notas Adicionales:</h3>
                 <p id="print-notes" class="italic">${notes || 'N/A'}</p>
             </div>
 
             <div class="footer-print">
-                <p><strong>Dirección del Concesionario:</strong> <span id="print-dealership-address">${dealershipAddress}</span></p>
+                <p><strong>Dirección:</strong> <span id="print-dealership-address">${dealershipAddress}</span></p>
                 <p><strong>Vendedor:</strong> <span id="print-salesperson">${salesperson}</span></p>
-                <p>Esta proforma es válida por 12 horas y está sujeta a la disponibilidad del inventario</p>
+                <p class="important-note">Esta proforma es válida por 12 horas y está sujeta a la disponibilidad del inventario.</p>
             </div>
         </div>
     `;
@@ -606,19 +670,9 @@ function clearForm() {
     dom.notesInput.value = '';
     dom.dealershipAddressInput.value = '';
     dom.salespersonInput.value = '';
-    dom.vehiclesContainer.innerHTML = ''; // Elimina todos los vehículos
+    dom.vehiclesContainer.innerHTML = ''; // Limpia los vehículos
     vehicleCounter = 0; // Reinicia el contador de vehículos
-    dom.paymentMethodSelect.value = 'USD'; // Restablece la modalidad de pago a USD
-    updatePriceInputLabels(); // Actualiza los labels de precio unitario
-    calculateQuote(); // Recalcula para limpiar el resumen
+    calculateQuote(); // Recalcula para mostrar "no hay vehículos"
+    dom.paymentMethodSelect.value = 'USD'; // Restablece a USD por defecto
+    updatePriceInputLabels(); // Actualiza los labels del precio
 }
-
-// Opcional: Llamar a calculateQuote al cargar la página si ya hay vehículos por defecto
-document.addEventListener('DOMContentLoaded', () => {
-    // Agrega un event listener al selector de modalidad de pago para que recalcule al cambiar
-    dom.paymentMethodSelect.addEventListener('change', () => {
-        updatePriceInputLabels(); // Actualiza los labels de precio cuando cambia la modalidad de pago
-        calculateQuote();
-    });
-    calculateQuote();
-});
